@@ -60,6 +60,11 @@ public class CapacityUseCase implements CapacityServicePort {
 
     }
 
+    @Override
+    public Flux<CapacityList> listCapacities(int page, int size, String sortBy, String sortDir, String messageId) {
+        return capacityPersistencePort.findCapabilitiesOrderedByName(page, size, sortBy, sortDir, messageId);
+    }
+
 
 //    private Mono<EmailValidationResult> validateDescription(String name, String messageId) {
 //        return validatorGateway.validateName(name, messageId)

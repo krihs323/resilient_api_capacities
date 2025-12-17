@@ -14,14 +14,12 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface CapacityTechnologyRepository extends ReactiveCrudRepository<CapacityTechnologyEntity, Long> {
 
-    @Query("""
-        SELECT c.name AS capacityName,
-                       COUNT(ct.id_tecnology) AS technologyCount
-                FROM capacities c
-                INNER JOIN capacities_x_tecnologies ct
-                    ON c.id = ct.id_capacity
-                GROUP BY c.id
-        """)
+     @Query("SELECT c.name AS name, \n" +
+            "               COUNT(ct.id_tecnology) AS cantTechnologies \n" +
+            "        FROM capacities c\n" +
+            "        INNER JOIN capacities_x_tecnologies ct\n" +
+            "            ON c.id = ct.id_capacity  \n" +
+            "        GROUP BY c.id ")
     Flux<CapacityTechnologyReportDto> findCapacityByTechnology(
             int size,
             long offset
@@ -35,4 +33,11 @@ public interface CapacityTechnologyRepository extends ReactiveCrudRepository<Cap
         """)
     Mono<Long> countGroupedCapacities();
 
+    @Query("SELECT c.name AS name, \n" +
+            "               COUNT(ct.id_tecnology) AS cantTechnologies \n" +
+            "        FROM capacities c\n" +
+            "        INNER JOIN capacities_x_tecnologies ct\n" +
+            "            ON c.id = ct.id_capacity  \n" +
+            "        GROUP BY c.id ")
+    Flux<CapacityList> getAll();
 }

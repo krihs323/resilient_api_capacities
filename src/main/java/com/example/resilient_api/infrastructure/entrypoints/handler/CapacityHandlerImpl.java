@@ -5,6 +5,8 @@ import com.example.resilient_api.domain.enums.TechnicalMessage;
 import com.example.resilient_api.domain.exceptions.BusinessException;
 import com.example.resilient_api.domain.exceptions.CustomException;
 import com.example.resilient_api.domain.exceptions.TechnicalException;
+import com.example.resilient_api.domain.model.CapacityList;
+import com.example.resilient_api.domain.model.PageResponse;
 import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityDTO;
 import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityTechnologyReportDto;
 import com.example.resilient_api.infrastructure.entrypoints.mapper.CapacityListMapper;
@@ -99,14 +101,15 @@ public class CapacityHandlerImpl {
         String sortDir = request.queryParam("sortDir").orElse("ASC");
 
 
-        //Mono<PageResult<CapacityListDTO>> resultMono = capacityServicePort.listCapacities(page, size, sortBy, sortDir);
+        Mono<PageResponse<CapacityTechnologyReportDto>> resultMono = capacityServicePort.listCapacitiesNoPage(page,  size,  sortBy,  sortDir, messageId);
+        return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(resultMono, PageResponse.class);
 
-        //Flux<CapacityTechnologyReportDto> products = capacityServicePort.listCapacitiesNoPage(page,  size,  sortBy,  sortDir, messageId).map(capacityListMapper::capacityListToCapacityListDTO);
-        //return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(products, CapacityTechnologyReportDto.class);
+        //Flux<CapacityList> products = capacityServicePort.listCapacities(page,  size,  sortBy,  sortDir, messageId);
+       // return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(products, CapacityList.class);
 
-        return ServerResponse.ok()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(capacityServicePort.listCapacitiesNoPage(page,  size,  sortBy,  sortDir, messageId), CapacityTechnologyReportDto.class);
+//        return ServerResponse.ok()
+//                .contentType(MediaType.APPLICATION_JSON)
+//                .body(capacityServicePort.listCapacitiesNoPage(page,  size,  sortBy,  sortDir, messageId), Object.class);
 
         //TODO SE DEBE CAMBIAR A LA PAGIGACION pageResult<OrderResponse>
         /*return request.bodyToMono(CapacityListDTO.class)

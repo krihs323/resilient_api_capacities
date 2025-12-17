@@ -5,13 +5,13 @@ import java.math.BigInteger;
 public class CapacityList {
 
     String name;
-    String cantTechnologies;
+    Long cantTechnologies;
 
 
     public CapacityList() {
     }
 
-    public CapacityList(String name, String cantTechnologies) {
+    public CapacityList(String name, Long cantTechnologies) {
         this.name = name;
         this.cantTechnologies = cantTechnologies;
     }
@@ -24,11 +24,11 @@ public class CapacityList {
         this.name = name;
     }
 
-    public String getCantTechnologies() {
+    public Long getCantTechnologies() {
         return cantTechnologies;
     }
 
-    public void setCantTechnologies(String cantTechnologies) {
+    public void setCantTechnologies(Long cantTechnologies) {
         this.cantTechnologies = cantTechnologies;
     }
 }

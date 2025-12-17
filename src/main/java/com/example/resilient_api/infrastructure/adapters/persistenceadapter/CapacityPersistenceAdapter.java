@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.r2dbc.core.DatabaseClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -37,6 +38,7 @@ public class CapacityPersistenceAdapter implements CapacityPersistencePort {
 
     private final CapacityListMapper capacityListMapper;
 
+    private final DatabaseClient databaseClient;
 
 //    @Override
 //    public Mono<Capacity> save(Capacity capacity) {
@@ -80,56 +82,64 @@ public class CapacityPersistenceAdapter implements CapacityPersistencePort {
     }
 
 
-   /* public Flux<PageResult<CapacityList>> getCapacityList(int page, int size, String sortBy, String sortDir, String messageId) {
-
-        Sort sort = Sort.by(Sort.Direction.ASC , sortBy);
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        // 2.1 Llamar al servicio, asumiendo que retorna Mono<PageResult<Capacity>>
-
-        Flux<Page<CapacityList>> resultMono = capacityTechnologyRepository.findallbyPage(pageable);
-
-        // 2.2 Mapear el PageResult<Capacity> a PageResult<CapacityList>
-        Flux<PageResult<CapacityList>> responseMono = resultMono
-                .map(capacityPageResult -> {
-
-                    // Mapear cada entidad Capacity a CapacityList
-                    List<CapacityList> capacityListResponses = capacityPageResult.getContent().stream()
-                            // Usamos un método del mapper que incluirá el cálculo
-                            .collect(Collectors.toList());
-
-                    // Crear el nuevo PageResult con los DTOs de respuesta
-                    return new PageResult<>(
-                            capacityListResponses,
-                            capacityPageResult.getNumber(),
-                            capacityPageResult.getSize(),
-                            capacityPageResult.getTotalElements(),
-                            capacityPageResult.getTotalPages(),
-                            capacityPageResult.isLast()
-                    );
-                });
-        return responseMono;
-
-    }*/
-
     @Override
     public Flux<CapacityTechnologyReportDto> getCapacityListNoPage(int page, int size, String sortBy, String sortDir, String messageId) {
 
-        long offset = (long) page * size;
-        return capacityTechnologyRepository.findCapacityByTechnology(size, offset);
+        //long offset = (long) page * size;
+        //return capacityTechnologyRepository.findCapacityByTechnology(size, offset);
 
-//        Flux<CapacityTechnologyReportDto> capacityListFlux = capacityTechnologyRepository.getAll().doOnNext(capacityList -> {
-//            // Aquí usamos el log para imprimir la información del objeto CapacityList
-//            log.info("Elemento de Capacidad recibido: Nombre={}, Cantidad={}",
-//                    capacityList.getName(),
-//                    capacityList.getCantTechnologies());
-//        });
-        //return capacityListFlux;
+        String sql = """
+            select capacities.description as name, count(capacities.id) as cantTechnologies from capacities_x_tecnologies inner join capacities on\s
+                            capacities_x_tecnologies.id_capacity  = capacities.id
+                            GROUP by capacities.id
+            LIMIT :limit OFFSET :offset
+            """;
+        return databaseClient.sql(sql)
+                .bind("limit", page)
+                .bind("offset", size)
+                .map((row, meta) -> new CapacityTechnologyReportDto(
+                        row.get("name", String.class),
+                        row.get("cantTechnologies", Long.class)
+                ))
+                .all();
     }
 
     @Override
     public Mono<Long> countGroupedCapacities() {
         return capacityTechnologyRepository.countGroupedCapacities();
+    }
+
+    @Override
+    public Flux<CapacityList> getCapacityList(int page, int size, String sortBy, String sortDir, String messageId) {
+                Flux<CapacityList> capacityListFlux = capacityTechnologyRepository.getAll().doOnNext(capacityList -> {
+//            // Aquí usamos el log para imprimir la información del objeto CapacityList
+            log.info("Elemento de Capacidad recibido: Nombre={}, Cantidad={}",
+                    capacityList.getName(),
+                    capacityList.getCantTechnologies());
+        });
+            return capacityListFlux;
+    }
+
+    @Override
+    public Flux<CapacityList> findCapabilitiesOrderedByName(
+            int offset,
+            int limit,
+            String sortBy, String sortDir, String messageId
+    ) {
+        String sql = """
+            select capacities.description as name, count(capacities.id) as cantTechnologies from capacities_x_tecnologies inner join capacities on\s
+                            capacities_x_tecnologies.id_capacity  = capacities.id
+                            GROUP by capacities.id
+            LIMIT :limit OFFSET :offset
+            """;
+        return databaseClient.sql(sql)
+                .bind("limit", limit)
+                .bind("offset", offset)
+                .map((row, meta) -> new CapacityList(
+                        row.get("name", String.class),
+                        row.get("cantTechnologies", Long.class)
+                ))
+                .all();
     }
 
 }

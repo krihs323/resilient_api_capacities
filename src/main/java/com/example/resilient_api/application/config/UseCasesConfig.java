@@ -13,6 +13,7 @@ import com.example.resilient_api.infrastructure.entrypoints.mapper.CapacityListM
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.r2dbc.core.DatabaseClient;
 
 @Configuration
 @RequiredArgsConstructor
@@ -25,9 +26,11 @@ public class UseCasesConfig {
 
         private final CapacityListMapper capacityListMapper;
 
+        private final DatabaseClient databaseClient;
+
         @Bean
         public CapacityPersistencePort capacitiesPersistencePort() {
-                return new CapacityPersistenceAdapter(capacityRepository, capacityEntityMapper, capacityTechnologyRepository, capacityTechnologyEntityMapper, capacityListMapper);
+                return new CapacityPersistenceAdapter(capacityRepository, capacityEntityMapper, capacityTechnologyRepository, capacityTechnologyEntityMapper, capacityListMapper, databaseClient);
         }
 
         @Bean

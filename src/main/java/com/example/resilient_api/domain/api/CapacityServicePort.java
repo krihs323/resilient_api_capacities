@@ -12,5 +12,7 @@ public interface CapacityServicePort {
 
     Mono<PageResponse<CapacityTechnologyReportDto>> listCapacitiesNoPage(int page, int size, String sortBy, String sortDir, String messageId);
 
+    Flux<CapacityList> listCapacities(int page, int size, String sortBy, String sortDir, String messageId);
+
 
 }

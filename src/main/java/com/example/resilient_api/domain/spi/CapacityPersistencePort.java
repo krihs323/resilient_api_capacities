@@ -14,4 +14,9 @@ public interface CapacityPersistencePort {
     Flux<CapacityTechnologyReportDto> getCapacityListNoPage(int page, int size, String sortBy, String sortDir, String messageId);
 
     Mono<Long> countGroupedCapacities();
+
+    Flux<CapacityList> getCapacityList(int page, int size, String sortBy, String sortDir, String messageId);
+
+    Flux<CapacityList> findCapabilitiesOrderedByName(int page, int size, String sortBy, String sortDir, String messageId);
+
 }
