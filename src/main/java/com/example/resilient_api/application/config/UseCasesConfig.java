@@ -9,6 +9,7 @@ import com.example.resilient_api.infrastructure.adapters.persistenceadapter.mapp
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.mapper.CapacityTechnologyEntityMapper;
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.repository.CapacityRepository;
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.repository.CapacityTechnologyRepository;
+import com.example.resilient_api.infrastructure.entrypoints.mapper.CapacityListMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,9 +23,11 @@ public class UseCasesConfig {
         private final CapacityTechnologyRepository capacityTechnologyRepository;
         private final CapacityTechnologyEntityMapper capacityTechnologyEntityMapper;
 
+        private final CapacityListMapper capacityListMapper;
+
         @Bean
         public CapacityPersistencePort capacitiesPersistencePort() {
-                return new CapacityPersistenceAdapter(capacityRepository, capacityEntityMapper, capacityTechnologyRepository, capacityTechnologyEntityMapper);
+                return new CapacityPersistenceAdapter(capacityRepository, capacityEntityMapper, capacityTechnologyRepository, capacityTechnologyEntityMapper, capacityListMapper);
         }
 
         @Bean

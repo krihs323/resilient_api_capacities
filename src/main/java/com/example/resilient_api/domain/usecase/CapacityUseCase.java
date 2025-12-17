@@ -3,10 +3,14 @@ package com.example.resilient_api.domain.usecase;
 import com.example.resilient_api.domain.enums.TechnicalMessage;
 import com.example.resilient_api.domain.exceptions.BusinessException;
 import com.example.resilient_api.domain.model.Capacity;
+import com.example.resilient_api.domain.model.CapacityList;
 import com.example.resilient_api.domain.model.CapacityTechnology;
+import com.example.resilient_api.domain.model.PageResponse;
 import com.example.resilient_api.domain.spi.EmailValidatorGateway;
 import com.example.resilient_api.domain.spi.CapacityPersistencePort;
 import com.example.resilient_api.domain.api.CapacityServicePort;
+import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityTechnologyReportDto;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.HashSet;
@@ -35,6 +39,25 @@ public class CapacityUseCase implements CapacityServicePort {
 //                        ? capacityPersistencePort.save(capacity)
 //                        : Mono.error(new BusinessException(TechnicalMessage.INVALID_EMAIL)))
                 ;
+    }
+
+
+
+    @Override
+    public Mono<PageResponse<CapacityTechnologyReportDto>> listCapacitiesNoPage(int page, int size, String sortBy, String sortDir, String messageId) {
+       // return capacityPersistencePort.getCapacityListNoPage(page, size, sortBy, sortDir, messageId);
+
+        var data = capacityPersistencePort.getCapacityListNoPage(page, size, sortBy, sortDir, messageId).collectList();
+        var total = capacityPersistencePort.countGroupedCapacities();
+
+        return Mono.zip(data, total)
+                .map(tuple -> new PageResponse<>(
+                        tuple.getT1(),
+                        tuple.getT2(),
+                        page,
+                        size
+                ));
+
     }
 
 

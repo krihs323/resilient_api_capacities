@@ -29,7 +29,7 @@ public class CapacityDTO {
             @Size(min = 3, message = "Minimo 3 tecnologias"),
             @Size(max = 20, message = "maximo 20 tecnologias")
     })
-    private List<TechnologyDTO> capacityTechnologyDTOList;
+    private List<TechnologyDTO> capacityTechnologyList;
 
 
 }

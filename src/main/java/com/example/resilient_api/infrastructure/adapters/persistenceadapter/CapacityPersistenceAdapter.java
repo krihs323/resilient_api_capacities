@@ -1,7 +1,9 @@
 package com.example.resilient_api.infrastructure.adapters.persistenceadapter;
 
 import com.example.resilient_api.domain.model.Capacity;
+import com.example.resilient_api.domain.model.CapacityList;
 import com.example.resilient_api.domain.model.CapacityTechnology;
+import com.example.resilient_api.domain.model.PageResponse;
 import com.example.resilient_api.domain.spi.CapacityPersistencePort;
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.entity.CapacityEntity;
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.entity.CapacityTechnologyEntity;
@@ -9,19 +11,31 @@ import com.example.resilient_api.infrastructure.adapters.persistenceadapter.mapp
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.mapper.CapacityTechnologyEntityMapper;
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.repository.CapacityRepository;
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.repository.CapacityTechnologyRepository;
+import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityTechnologyReportDto;
+import com.example.resilient_api.infrastructure.entrypoints.mapper.CapacityListMapper;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
+@Slf4j
 public class CapacityPersistenceAdapter implements CapacityPersistencePort {
     private final CapacityRepository capacityRepository;
     private final CapacityEntityMapper capacityEntityMapper;
 
     private final CapacityTechnologyRepository capacityTechnologyRepository;
     private final CapacityTechnologyEntityMapper capacityTechnologyEntityMapper;
+
+    private final CapacityListMapper capacityListMapper;
 
 
 //    @Override
@@ -63,6 +77,59 @@ public class CapacityPersistenceAdapter implements CapacityPersistencePort {
                 .map(capacityEntityMapper::toModel)
                 .map(capacity -> true)  // Si encuentra el usuario, devuelve true
                 .defaultIfEmpty(false);  // Si no encuentra, devuelve false
+    }
+
+
+   /* public Flux<PageResult<CapacityList>> getCapacityList(int page, int size, String sortBy, String sortDir, String messageId) {
+
+        Sort sort = Sort.by(Sort.Direction.ASC , sortBy);
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // 2.1 Llamar al servicio, asumiendo que retorna Mono<PageResult<Capacity>>
+
+        Flux<Page<CapacityList>> resultMono = capacityTechnologyRepository.findallbyPage(pageable);
+
+        // 2.2 Mapear el PageResult<Capacity> a PageResult<CapacityList>
+        Flux<PageResult<CapacityList>> responseMono = resultMono
+                .map(capacityPageResult -> {
+
+                    // Mapear cada entidad Capacity a CapacityList
+                    List<CapacityList> capacityListResponses = capacityPageResult.getContent().stream()
+                            // Usamos un método del mapper que incluirá el cálculo
+                            .collect(Collectors.toList());
+
+                    // Crear el nuevo PageResult con los DTOs de respuesta
+                    return new PageResult<>(
+                            capacityListResponses,
+                            capacityPageResult.getNumber(),
+                            capacityPageResult.getSize(),
+                            capacityPageResult.getTotalElements(),
+                            capacityPageResult.getTotalPages(),
+                            capacityPageResult.isLast()
+                    );
+                });
+        return responseMono;
+
+    }*/
+
+    @Override
+    public Flux<CapacityTechnologyReportDto> getCapacityListNoPage(int page, int size, String sortBy, String sortDir, String messageId) {
+
+        long offset = (long) page * size;
+        return capacityTechnologyRepository.findCapacityByTechnology(size, offset);
+
+//        Flux<CapacityTechnologyReportDto> capacityListFlux = capacityTechnologyRepository.getAll().doOnNext(capacityList -> {
+//            // Aquí usamos el log para imprimir la información del objeto CapacityList
+//            log.info("Elemento de Capacidad recibido: Nombre={}, Cantidad={}",
+//                    capacityList.getName(),
+//                    capacityList.getCantTechnologies());
+//        });
+        //return capacityListFlux;
+    }
+
+    @Override
+    public Mono<Long> countGroupedCapacities() {
+        return capacityTechnologyRepository.countGroupedCapacities();
     }
 
 }

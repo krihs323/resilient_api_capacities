@@ -6,6 +6,8 @@ import com.example.resilient_api.domain.exceptions.BusinessException;
 import com.example.resilient_api.domain.exceptions.CustomException;
 import com.example.resilient_api.domain.exceptions.TechnicalException;
 import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityDTO;
+import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityTechnologyReportDto;
+import com.example.resilient_api.infrastructure.entrypoints.mapper.CapacityListMapper;
 import com.example.resilient_api.infrastructure.entrypoints.mapper.CapacityMapper;
 import com.example.resilient_api.infrastructure.entrypoints.util.APIResponse;
 import com.example.resilient_api.infrastructure.entrypoints.util.ErrorDTO;
@@ -13,9 +15,11 @@ import com.example.resilient_api.infrastructure.validation.ObjectValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.context.Context;
 
@@ -31,6 +35,7 @@ public class CapacityHandlerImpl {
 
     private final CapacityServicePort capacityServicePort;
     private final CapacityMapper capacityMapper;
+    private final CapacityListMapper capacityListMapper;
     private final ObjectValidator objectValidator;
 
     public Mono<ServerResponse> createCapacity(ServerRequest request) {
@@ -81,6 +86,39 @@ public class CapacityHandlerImpl {
                                     .message(TechnicalMessage.INTERNAL_ERROR.getMessage())
                                     .build()));
                 });
+    }
+
+    public Mono<ServerResponse> listCapacity(ServerRequest request) {
+        String messageId = getMessageId(request);
+
+        //Parametros de paginacion
+        String pageStr = request.queryParam("page").orElse("0");
+        int page = Integer.parseInt(pageStr);
+        int size = Integer.parseInt(request.queryParam("size").orElse("10"));
+        String sortBy = request.queryParam("sortBy").orElse("name");
+        String sortDir = request.queryParam("sortDir").orElse("ASC");
+
+
+        //Mono<PageResult<CapacityListDTO>> resultMono = capacityServicePort.listCapacities(page, size, sortBy, sortDir);
+
+        //Flux<CapacityTechnologyReportDto> products = capacityServicePort.listCapacitiesNoPage(page,  size,  sortBy,  sortDir, messageId).map(capacityListMapper::capacityListToCapacityListDTO);
+        //return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(products, CapacityTechnologyReportDto.class);
+
+        return ServerResponse.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(capacityServicePort.listCapacitiesNoPage(page,  size,  sortBy,  sortDir, messageId), CapacityTechnologyReportDto.class);
+
+        //TODO SE DEBE CAMBIAR A LA PAGIGACION pageResult<OrderResponse>
+        /*return request.bodyToMono(CapacityListDTO.class)
+                .flatMap(capacity -> capacityServicePort.listCapacities(capacityListMapper.capacityListDTOToCapacityList(capacity), page,  size,  sortBy,  sortDir, messageId)
+                        .doOnSuccess(savedCapacity -> log.info("Capacity listed successfully with messageId: {}", messageId))
+                )
+                .flatMap(savedCapacity -> ServerResponse
+                        .status(HttpStatus.CREATED)
+                        .bodyValue(TechnicalMessage.CAPACITY_CREATED.getMessage()))
+                .contextWrite(Context.of(X_MESSAGE_ID, messageId))
+                .doOnError(ex -> log.error(CAPACITY_ERROR, ex))
+               ;*/
     }
 
     private Mono<ServerResponse> buildErrorResponse(HttpStatus httpStatus, String identifier, TechnicalMessage error,
