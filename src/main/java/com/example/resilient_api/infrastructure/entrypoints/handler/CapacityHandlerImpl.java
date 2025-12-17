@@ -5,7 +5,6 @@ import com.example.resilient_api.domain.enums.TechnicalMessage;
 import com.example.resilient_api.domain.exceptions.BusinessException;
 import com.example.resilient_api.domain.exceptions.CustomException;
 import com.example.resilient_api.domain.exceptions.TechnicalException;
-import com.example.resilient_api.domain.model.CapacityList;
 import com.example.resilient_api.domain.model.PageResponse;
 import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityDTO;
 import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityTechnologyReportDto;
@@ -28,7 +27,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.context.Context;
 
