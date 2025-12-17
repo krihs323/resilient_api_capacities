@@ -83,3 +83,11 @@ resilience4j:
       emailValidatorBulkhead:
         maxConcurrentCalls: 5
         maxWaitDuration: 1s
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+  # Esto evita que cargue la Petstore si no encuentra nada
+  disable-i18n: true

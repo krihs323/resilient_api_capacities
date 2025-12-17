@@ -14,6 +14,13 @@ import com.example.resilient_api.infrastructure.entrypoints.mapper.CapacityMappe
 import com.example.resilient_api.infrastructure.entrypoints.util.APIResponse;
 import com.example.resilient_api.infrastructure.entrypoints.util.ErrorDTO;
 import com.example.resilient_api.infrastructure.validation.ObjectValidator;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -40,6 +47,21 @@ public class CapacityHandlerImpl {
     private final CapacityListMapper capacityListMapper;
     private final ObjectValidator objectValidator;
 
+    @Operation(
+            summary = "Registrar una nueva capacidad",
+            description = "Crea una capacidad con un nombre, descripción y una lista de tecnologías (mínimo 3, máximo 20).",
+            requestBody = @RequestBody(
+                    description = "Información de la capacidad a registrar",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = CapacityDTO.class)
+                    )
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Capacidad creada exitosamente"),
+                    @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos")
+            })
     public Mono<ServerResponse> createCapacity(ServerRequest request) {
         String messageId = getMessageId(request);
         return request.bodyToMono(CapacityDTO.class).doOnNext(objectValidator::validate)
@@ -90,38 +112,23 @@ public class CapacityHandlerImpl {
                 });
     }
 
+    @Operation(parameters = {
+            @Parameter(name = "page", in = ParameterIn.QUERY, example = "0", description = "Número de página"),
+            @Parameter(name = "size", in = ParameterIn.QUERY, example = "10", description = "Tamaño de la pàgina"),
+            @Parameter(name = "sortBy", in = ParameterIn.QUERY, example = "name", description = "Ordenar por"),
+            @Parameter(name = "sortDir", in = ParameterIn.QUERY, example = "ASC", description = "Dirección ASC/DESC")
+    })
     public Mono<ServerResponse> listCapacity(ServerRequest request) {
         String messageId = getMessageId(request);
-
         //Parametros de paginacion
         String pageStr = request.queryParam("page").orElse("0");
         int page = Integer.parseInt(pageStr);
         int size = Integer.parseInt(request.queryParam("size").orElse("10"));
         String sortBy = request.queryParam("sortBy").orElse("name");
         String sortDir = request.queryParam("sortDir").orElse("ASC");
-
-
-        Mono<PageResponse<CapacityTechnologyReportDto>> resultMono = capacityServicePort.listCapacitiesNoPage(page,  size,  sortBy,  sortDir, messageId);
+        Mono<PageResponse<CapacityTechnologyReportDto>> resultMono = capacityServicePort.listCapacitiesPage(page,  size,  sortBy,  sortDir, messageId);
         return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(resultMono, PageResponse.class);
 
-        //Flux<CapacityList> products = capacityServicePort.listCapacities(page,  size,  sortBy,  sortDir, messageId);
-       // return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(products, CapacityList.class);
-
-//        return ServerResponse.ok()
-//                .contentType(MediaType.APPLICATION_JSON)
-//                .body(capacityServicePort.listCapacitiesNoPage(page,  size,  sortBy,  sortDir, messageId), Object.class);
-
-        //TODO SE DEBE CAMBIAR A LA PAGIGACION pageResult<OrderResponse>
-        /*return request.bodyToMono(CapacityListDTO.class)
-                .flatMap(capacity -> capacityServicePort.listCapacities(capacityListMapper.capacityListDTOToCapacityList(capacity), page,  size,  sortBy,  sortDir, messageId)
-                        .doOnSuccess(savedCapacity -> log.info("Capacity listed successfully with messageId: {}", messageId))
-                )
-                .flatMap(savedCapacity -> ServerResponse
-                        .status(HttpStatus.CREATED)
-                        .bodyValue(TechnicalMessage.CAPACITY_CREATED.getMessage()))
-                .contextWrite(Context.of(X_MESSAGE_ID, messageId))
-                .doOnError(ex -> log.error(CAPACITY_ERROR, ex))
-               ;*/
     }
 
     private Mono<ServerResponse> buildErrorResponse(HttpStatus httpStatus, String identifier, TechnicalMessage error,

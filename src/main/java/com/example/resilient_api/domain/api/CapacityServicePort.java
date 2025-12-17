@@ -10,7 +10,7 @@ import reactor.core.publisher.Mono;
 public interface CapacityServicePort {
     Mono<Capacity> registerCapacity(Capacity capacity, String messageId);
 
-    Mono<PageResponse<CapacityTechnologyReportDto>> listCapacitiesNoPage(int page, int size, String sortBy, String sortDir, String messageId);
+    Mono<PageResponse<CapacityTechnologyReportDto>> listCapacitiesPage(int page, int size, String sortBy, String sortDir, String messageId);
 
     Flux<CapacityList> listCapacities(int page, int size, String sortBy, String sortDir, String messageId);
 

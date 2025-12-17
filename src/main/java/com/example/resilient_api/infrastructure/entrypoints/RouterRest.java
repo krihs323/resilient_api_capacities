@@ -11,18 +11,28 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 
 import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
 import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
-import static org.springframework.web.reactive.function.server.RouterFunctions.route;
+
+import static org.springdoc.webflux.core.fn.SpringdocRouteBuilder.route;
+import static org.springdoc.webflux.core.fn.SpringdocRouteBuilder.route;
+import static org.springdoc.core.fn.builders.parameter.Builder.parameterBuilder;
+import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY;
+
 
 @Configuration
 public class RouterRest {
 
-    @RouterOperations({ @RouterOperation(path = "/getAllPersons", beanClass = CapacityDTO.class, beanMethod = "getAll"),
-            @RouterOperation(path = "/getPerson/{id}", beanClass = CapacityDTO.class, beanMethod = "getById"),
-            @RouterOperation(path = "/createPerson", beanClass = CapacityDTO.class, beanMethod = "save"),
-            @RouterOperation(path = "/deletePerson/{id}", beanClass = CapacityDTO.class, beanMethod = "delete") })
+
     @Bean
     public RouterFunction<ServerResponse> routerFunction(CapacityHandlerImpl capacityHandler) {
-        return route(POST("/capacity"), capacityHandler::createCapacity).
-                andRoute(GET("/capacity"), capacityHandler::listCapacity);
+        return route()
+                .POST("/capacity",
+                        capacityHandler::createCapacity,
+                        ops -> ops.beanClass(CapacityHandlerImpl.class).beanMethod("createCapacity"))
+
+                .GET("/capacity",
+                        capacityHandler::listCapacity,
+                        ops -> ops.beanClass(CapacityHandlerImpl.class).beanMethod("listCapacity")
+                )
+                .build();
     }
 }

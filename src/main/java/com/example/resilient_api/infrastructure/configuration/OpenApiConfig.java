@@ -16,4 +16,6 @@ public class OpenApiConfig {
                         .version("1.0")
                         .description("API RESTful reactiva construida con Spring WebFlux y R2DBC."));
     }
+
+
 }

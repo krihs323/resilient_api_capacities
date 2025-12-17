@@ -27,7 +27,6 @@ public class CapacityUseCase implements CapacityServicePort {
         this.validatorGateway = validatorGateway;
     }
 
-    //TODO AQUI
     @Override
     public Mono<Capacity> registerCapacity(Capacity capacity, String messageId) {
         return capacityPersistencePort.existByName(capacity.name())
@@ -44,10 +43,8 @@ public class CapacityUseCase implements CapacityServicePort {
 
 
     @Override
-    public Mono<PageResponse<CapacityTechnologyReportDto>> listCapacitiesNoPage(int page, int size, String sortBy, String sortDir, String messageId) {
-       // return capacityPersistencePort.getCapacityListNoPage(page, size, sortBy, sortDir, messageId);
-
-        var data = capacityPersistencePort.getCapacityListNoPage(page, size, sortBy, sortDir, messageId).collectList();
+    public Mono<PageResponse<CapacityTechnologyReportDto>> listCapacitiesPage(int page, int size, String sortBy, String sortDir, String messageId) {
+        var data = capacityPersistencePort.listCapacitiesPage(page, size, sortBy, sortDir, messageId).collectList();
         var total = capacityPersistencePort.countGroupedCapacities();
 
         return Mono.zip(data, total)
@@ -57,14 +54,12 @@ public class CapacityUseCase implements CapacityServicePort {
                         page,
                         size
                 ));
-
     }
 
     @Override
     public Flux<CapacityList> listCapacities(int page, int size, String sortBy, String sortDir, String messageId) {
         return capacityPersistencePort.findCapabilitiesOrderedByName(page, size, sortBy, sortDir, messageId);
     }
-
 
 //    private Mono<EmailValidationResult> validateDescription(String name, String messageId) {
 //        return validatorGateway.validateName(name, messageId)

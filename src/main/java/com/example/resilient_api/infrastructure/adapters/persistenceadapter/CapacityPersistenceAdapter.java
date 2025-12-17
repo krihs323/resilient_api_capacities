@@ -40,20 +40,6 @@ public class CapacityPersistenceAdapter implements CapacityPersistencePort {
 
     private final DatabaseClient databaseClient;
 
-//    @Override
-//    public Mono<Capacity> save(Capacity capacity) {
-//        //TODO GUARDAR EL DETALLE
-//        Mono<CapacityEntity> capacityEntitySaved = capacityRepository.save(capacityEntityMapper.toEntity(capacity));
-//
-//        List<CapacityTechnologyEntity> details = new java.util.ArrayList<>();
-//        for (CapacityTechnology req : capacity.capacityTechnologyList()) {
-//            CapacityTechnologyEntity capacityTechnologyEntity = new CapacityTechnologyEntity();
-//            capacityTechnologyEntity.setId_capacity(capacityEntitySaved.flatMap(x-> x.getId());
-//        }
-//        //return capacityRepository.save(capacityEntityMapper.toEntity(capacity))
-//        //        .map(capacityEntityMapper::toModel);
-//    }
-
     @Override
     public Mono<Capacity> save(Capacity capacity) {
         return capacityRepository
@@ -83,20 +69,18 @@ public class CapacityPersistenceAdapter implements CapacityPersistencePort {
 
 
     @Override
-    public Flux<CapacityTechnologyReportDto> getCapacityListNoPage(int page, int size, String sortBy, String sortDir, String messageId) {
-
-        //long offset = (long) page * size;
-        //return capacityTechnologyRepository.findCapacityByTechnology(size, offset);
+    public Flux<CapacityTechnologyReportDto> listCapacitiesPage(int page, int size, String sortBy, String sortDir, String messageId) {
 
         String sql = """
             select capacities.description as name, count(capacities.id) as cantTechnologies from capacities_x_tecnologies inner join capacities on\s
                             capacities_x_tecnologies.id_capacity  = capacities.id
                             GROUP by capacities.id
+                            ORDER BY %s %s
             LIMIT :limit OFFSET :offset
-            """;
+            """.formatted(sortBy, sortDir);;
         return databaseClient.sql(sql)
-                .bind("limit", page)
-                .bind("offset", size)
+                .bind("limit", size )
+                .bind("offset", page)
                 .map((row, meta) -> new CapacityTechnologyReportDto(
                         row.get("name", String.class),
                         row.get("cantTechnologies", Long.class)
@@ -107,17 +91,6 @@ public class CapacityPersistenceAdapter implements CapacityPersistencePort {
     @Override
     public Mono<Long> countGroupedCapacities() {
         return capacityTechnologyRepository.countGroupedCapacities();
-    }
-
-    @Override
-    public Flux<CapacityList> getCapacityList(int page, int size, String sortBy, String sortDir, String messageId) {
-                Flux<CapacityList> capacityListFlux = capacityTechnologyRepository.getAll().doOnNext(capacityList -> {
-//            // Aquí usamos el log para imprimir la información del objeto CapacityList
-            log.info("Elemento de Capacidad recibido: Nombre={}, Cantidad={}",
-                    capacityList.getName(),
-                    capacityList.getCantTechnologies());
-        });
-            return capacityListFlux;
     }
 
     @Override
