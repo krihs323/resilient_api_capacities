@@ -61,6 +61,7 @@ public class CapacityUseCase implements CapacityServicePort {
         return capacityPersistencePort.findCapabilitiesOrderedByName(page, size, sortBy, sortDir, messageId);
     }
 
+
 //    private Mono<EmailValidationResult> validateDescription(String name, String messageId) {
 //        return validatorGateway.validateName(name, messageId)
 //                .filter(validationResult -> validationResult.deliverability().equals(Constants.DELIVERABLE))

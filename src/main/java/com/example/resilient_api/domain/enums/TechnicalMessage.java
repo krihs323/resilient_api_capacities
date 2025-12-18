@@ -18,7 +18,8 @@ public enum TechnicalMessage {
     ADAPTER_RESPONSE_NOT_FOUND("404-0", "invalid email, please verify", ""),
     CAPACITY_ALREADY_EXISTS("400","La tecnologia ya está registrado." ,"" ),
     CAPACITY_NAME_EMPTY("400","El nombre no debe ser vacio" ,"name" ),
-    TECHNOLOGY_DUPLICATE_IN_LIST("400","Tecnologias repetidas en la capacidad que intenta crear" ,"" );
+    TECHNOLOGY_DUPLICATE_IN_LIST("400","Tecnologias repetidas en la capacidad que intenta crear" ,"" ),
+    CAPACITY_DUPLICATE_IN_LIST("400","Capacidades repetidas en el bootcamp que intenta crear" ,"" );
 
     private final String code;
     private final String message;

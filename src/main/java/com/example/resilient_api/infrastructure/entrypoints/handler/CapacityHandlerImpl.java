@@ -1,13 +1,18 @@
 package com.example.resilient_api.infrastructure.entrypoints.handler;
 
+import com.example.resilient_api.domain.api.BootcampCapacityServicePort;
 import com.example.resilient_api.domain.api.CapacityServicePort;
 import com.example.resilient_api.domain.enums.TechnicalMessage;
 import com.example.resilient_api.domain.exceptions.BusinessException;
 import com.example.resilient_api.domain.exceptions.CustomException;
 import com.example.resilient_api.domain.exceptions.TechnicalException;
+import com.example.resilient_api.domain.model.BootcampCapacity;
 import com.example.resilient_api.domain.model.PageResponse;
+import com.example.resilient_api.infrastructure.entrypoints.dto.BootcampCapacitiesDTO;
 import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityDTO;
 import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityTechnologyReportDto;
+import com.example.resilient_api.infrastructure.entrypoints.mapper.BootcampCapacitieMapper;
+import com.example.resilient_api.infrastructure.entrypoints.mapper.BootcampCapacitiesMapper;
 import com.example.resilient_api.infrastructure.entrypoints.mapper.CapacityListMapper;
 import com.example.resilient_api.infrastructure.entrypoints.mapper.CapacityMapper;
 import com.example.resilient_api.infrastructure.entrypoints.util.APIResponse;
@@ -44,6 +49,9 @@ public class CapacityHandlerImpl {
     private final CapacityMapper capacityMapper;
     private final CapacityListMapper capacityListMapper;
     private final ObjectValidator objectValidator;
+    private final BootcampCapacitiesMapper bootcampCapacitiesMapper;
+    private final BootcampCapacityServicePort bootcampCapacityServicePort;
+
 
     @Operation(
             summary = "Registrar una nueva capacidad",
@@ -64,6 +72,71 @@ public class CapacityHandlerImpl {
         String messageId = getMessageId(request);
         return request.bodyToMono(CapacityDTO.class).doOnNext(objectValidator::validate)
                 .flatMap(capacity -> capacityServicePort.registerCapacity(capacityMapper.capacityDTOToCapacity(capacity), messageId)
+                        .doOnSuccess(savedCapacity -> log.info("Capacity created successfully with messageId: {}", messageId))
+                )
+                .flatMap(savedCapacity -> ServerResponse
+                        .status(HttpStatus.CREATED)
+                        .bodyValue(TechnicalMessage.CAPACITY_CREATED.getMessage()))
+                .contextWrite(Context.of(X_MESSAGE_ID, messageId))
+                .doOnError(ex -> log.error(CAPACITY_ERROR, ex))
+                .onErrorResume(BusinessException.class, ex -> buildErrorResponse(
+                        HttpStatus.BAD_REQUEST,
+                        messageId,
+                        TechnicalMessage.INVALID_PARAMETERS,
+                        List.of(ErrorDTO.builder()
+                                .code(ex.getTechnicalMessage().getCode())
+                                .message(ex.getTechnicalMessage().getMessage())
+                                .param(ex.getTechnicalMessage().getParam())
+                                .build())))
+                .onErrorResume(TechnicalException.class, ex -> buildErrorResponse(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        messageId,
+                        TechnicalMessage.INTERNAL_ERROR,
+                        List.of(ErrorDTO.builder()
+                                .code(ex.getTechnicalMessage().getCode())
+                                .message(ex.getTechnicalMessage().getMessage())
+                                .param(ex.getTechnicalMessage().getParam())
+                                .build())))
+                .onErrorResume(CustomException.class, ex -> buildErrorResponse(
+                        HttpStatus.BAD_REQUEST,
+                        messageId,
+                        TechnicalMessage.INVALID_REQUEST,
+                        List.of(ErrorDTO.builder()
+                                .code(TechnicalMessage.INVALID_REQUEST.getCode())
+                                .message(ex.getMessage())
+                                .build())))
+                .onErrorResume(ex -> {
+                    log.error("Unexpected error occurred for messageId: {}", messageId, ex);
+                    return buildErrorResponse(
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            messageId,
+                            TechnicalMessage.INTERNAL_ERROR,
+                            List.of(ErrorDTO.builder()
+                                    .code(TechnicalMessage.INTERNAL_ERROR.getCode())
+                                    .message(TechnicalMessage.INTERNAL_ERROR.getMessage())
+                                    .build()));
+                });
+    }
+
+    @Operation(
+            summary = "Registrar una nuevaas capacidades por bootcamps",
+            description = "Crea una lista de capacidades del bootcamp",
+            requestBody = @RequestBody(
+                    description = "Información de la capacidad a registrar",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = BootcampCapacitiesDTO.class)
+                    )
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Capacidad creada exitosamente"),
+                    @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos")
+            })
+    public Mono<ServerResponse> createCapacityBootcamp(ServerRequest request) {
+        String messageId = getMessageId(request);
+        return request.bodyToMono(BootcampCapacitiesDTO.class).doOnNext(objectValidator::validate)
+                .flatMap(capacity -> bootcampCapacityServicePort.registerBootcampCapacity(bootcampCapacitiesMapper.bootcampCapacitiesDTOToBootcampCapacities(capacity), messageId)
                         .doOnSuccess(savedCapacity -> log.info("Capacity created successfully with messageId: {}", messageId))
                 )
                 .flatMap(savedCapacity -> ServerResponse
