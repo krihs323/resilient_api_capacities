@@ -5,6 +5,7 @@ import com.example.resilient_api.domain.enums.TechnicalMessage;
 import com.example.resilient_api.domain.exceptions.BusinessException;
 import com.example.resilient_api.domain.model.*;
 import com.example.resilient_api.domain.spi.BootcampCapacityPersistencePort;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.HashSet;
@@ -26,6 +27,11 @@ public class BootcampCapacityUseCase implements BootcampCapacityServicePort {
                 .switchIfEmpty(Mono.error(new BusinessException(TechnicalMessage.CAPACITY_ALREADY_EXISTS)))
                 .flatMap(exists -> validateDuplicate(bootcampCapacities.bootcampCapacityList()))
                 .flatMap(x-> bootcampCapacityPersistencePort.save(bootcampCapacities));
+    }
+
+    @Override
+    public Flux<BootcampCapacity> listCapacitiesBootcamp(int page, int size, String sortBy, String sortDir, String messageId) {
+        return bootcampCapacityPersistencePort.getAll(page, size, sortBy, sortDir, messageId);
     }
 
 

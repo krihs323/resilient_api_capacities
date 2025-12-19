@@ -1,11 +1,7 @@
 package com.example.resilient_api.infrastructure.adapters.persistenceadapter;
 
-import com.example.resilient_api.domain.model.Capacity;
-import com.example.resilient_api.domain.model.CapacityList;
-import com.example.resilient_api.domain.model.CapacityTechnology;
-import com.example.resilient_api.domain.model.PageResponse;
+import com.example.resilient_api.domain.model.*;
 import com.example.resilient_api.domain.spi.CapacityPersistencePort;
-import com.example.resilient_api.infrastructure.adapters.persistenceadapter.entity.CapacityEntity;
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.entity.CapacityTechnologyEntity;
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.mapper.CapacityEntityMapper;
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.mapper.CapacityTechnologyEntityMapper;
@@ -15,17 +11,13 @@ import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityTechnolo
 import com.example.resilient_api.infrastructure.entrypoints.mapper.CapacityListMapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+
 import org.springframework.r2dbc.core.DatabaseClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Slf4j
@@ -39,6 +31,8 @@ public class CapacityPersistenceAdapter implements CapacityPersistencePort {
     private final CapacityListMapper capacityListMapper;
 
     private final DatabaseClient databaseClient;
+
+
 
     @Override
     public Mono<Capacity> save(Capacity capacity) {

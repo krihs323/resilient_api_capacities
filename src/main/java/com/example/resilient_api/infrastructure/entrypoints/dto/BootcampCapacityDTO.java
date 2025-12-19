@@ -1,5 +1,6 @@
 package com.example.resilient_api.infrastructure.entrypoints.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
@@ -21,4 +22,7 @@ public class BootcampCapacityDTO {
     @Digits(integer = 3, fraction = 0, message = "Id del bootcamp invalido")
     @PositiveOrZero
     private Long idBootcamp;
+
+    //@JsonIgnore
+    private Long id;
 }

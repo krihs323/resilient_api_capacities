@@ -2,13 +2,11 @@ package com.example.resilient_api.domain.usecase;
 
 import com.example.resilient_api.domain.enums.TechnicalMessage;
 import com.example.resilient_api.domain.exceptions.BusinessException;
-import com.example.resilient_api.domain.model.Capacity;
-import com.example.resilient_api.domain.model.CapacityList;
-import com.example.resilient_api.domain.model.CapacityTechnology;
-import com.example.resilient_api.domain.model.PageResponse;
+import com.example.resilient_api.domain.model.*;
 import com.example.resilient_api.domain.spi.EmailValidatorGateway;
 import com.example.resilient_api.domain.spi.CapacityPersistencePort;
 import com.example.resilient_api.domain.api.CapacityServicePort;
+import com.example.resilient_api.infrastructure.entrypoints.dto.BootcampCapacityDTO;
 import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityTechnologyReportDto;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -60,6 +58,8 @@ public class CapacityUseCase implements CapacityServicePort {
     public Flux<CapacityList> listCapacities(int page, int size, String sortBy, String sortDir, String messageId) {
         return capacityPersistencePort.findCapabilitiesOrderedByName(page, size, sortBy, sortDir, messageId);
     }
+
+
 
 
 //    private Mono<EmailValidationResult> validateDescription(String name, String messageId) {

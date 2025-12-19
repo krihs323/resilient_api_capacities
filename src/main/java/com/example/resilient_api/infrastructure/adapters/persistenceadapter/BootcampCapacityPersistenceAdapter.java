@@ -8,6 +8,7 @@ import com.example.resilient_api.infrastructure.adapters.persistenceadapter.mapp
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.repository.BootcampCapacityRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
@@ -42,6 +43,11 @@ public class BootcampCapacityPersistenceAdapter implements BootcampCapacityPersi
                 .map(bootcampCapacityEntityMapper::toModel)
                 .map(bootcampCapacity -> true)  // Si encuentra el usuario, devuelve true
                 .defaultIfEmpty(false);  // Si no encuentra, devuelve false
+    }
+
+    @Override
+    public Flux<BootcampCapacity> getAll(int page, int size, String sortBy, String sortDir, String messageId) {
+        return bootcampCapacityRepository.findAll().map(bootcampCapacityEntityMapper::toModel);
     }
 
 }

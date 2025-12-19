@@ -16,4 +16,6 @@ public interface BootcampCapacitiesMapper {
     @Mapping(source = "bootcampCapacityList", target = "bootcampCapacityList")
     BootcampCapacities bootcampCapacitiesDTOToBootcampCapacities(BootcampCapacitiesDTO bootcampCapacitiesDTO);
 
+
+
 }

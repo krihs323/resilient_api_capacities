@@ -18,4 +18,11 @@ public interface BootcampCapacitieMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(source = "idCapacity", target = "idCapacity")
     BootcampCapacity toBootcampCapacity(BootcampCapacityDTO bootcampCapacityDTO);
+
+    //mapeo nuevo
+    @Mapping(source = "idBootcamp", target = "idBootcamp")
+    @Mapping(source = "id", target = "id")
+    @Mapping(source = "idCapacity", target = "idCapacity")
+    BootcampCapacityDTO toBootcampCapacityDTO(BootcampCapacity bootcampCapacity);
+
 }

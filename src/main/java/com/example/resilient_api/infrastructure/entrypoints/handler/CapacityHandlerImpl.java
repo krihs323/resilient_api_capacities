@@ -9,6 +9,7 @@ import com.example.resilient_api.domain.exceptions.TechnicalException;
 import com.example.resilient_api.domain.model.BootcampCapacity;
 import com.example.resilient_api.domain.model.PageResponse;
 import com.example.resilient_api.infrastructure.entrypoints.dto.BootcampCapacitiesDTO;
+import com.example.resilient_api.infrastructure.entrypoints.dto.BootcampCapacityDTO;
 import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityDTO;
 import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityTechnologyReportDto;
 import com.example.resilient_api.infrastructure.entrypoints.mapper.BootcampCapacitieMapper;
@@ -32,6 +33,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.context.Context;
 
@@ -51,6 +53,7 @@ public class CapacityHandlerImpl {
     private final ObjectValidator objectValidator;
     private final BootcampCapacitiesMapper bootcampCapacitiesMapper;
     private final BootcampCapacityServicePort bootcampCapacityServicePort;
+    private final BootcampCapacitieMapper bootcampCapacitieMapper;
 
 
     @Operation(
@@ -198,6 +201,25 @@ public class CapacityHandlerImpl {
         String sortBy = request.queryParam("sortBy").orElse("name");
         String sortDir = request.queryParam("sortDir").orElse("ASC");
         Mono<PageResponse<CapacityTechnologyReportDto>> resultMono = capacityServicePort.listCapacitiesPage(page,  size,  sortBy,  sortDir, messageId);
+        return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(resultMono, PageResponse.class);
+
+    }
+
+    @Operation(parameters = {
+            @Parameter(name = "page", in = ParameterIn.QUERY, example = "0", description = "Número de página"),
+            @Parameter(name = "size", in = ParameterIn.QUERY, example = "10", description = "Tamaño de la pàgina"),
+            @Parameter(name = "sortBy", in = ParameterIn.QUERY, example = "name", description = "Ordenar por"),
+            @Parameter(name = "sortDir", in = ParameterIn.QUERY, example = "ASC", description = "Dirección ASC/DESC")
+    })
+    public Mono<ServerResponse> listCapacityBootcamps(ServerRequest request) {
+        String messageId = getMessageId(request);
+        //Parametros de paginacion
+        String pageStr = request.queryParam("page").orElse("0");
+        int page = Integer.parseInt(pageStr);
+        int size = Integer.parseInt(request.queryParam("size").orElse("10"));
+        String sortBy = request.queryParam("sortBy").orElse("name");
+        String sortDir = request.queryParam("sortDir").orElse("ASC");
+        Flux<BootcampCapacityDTO> resultMono = bootcampCapacityServicePort.listCapacitiesBootcamp(page,  size,  sortBy,  sortDir, messageId).map(bootcampCapacitieMapper::toBootcampCapacityDTO);
         return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(resultMono, PageResponse.class);
 
     }
