@@ -221,6 +221,18 @@ public class CapacityHandlerImpl {
         String sortDir = request.queryParam("sortDir").orElse("ASC");
         Flux<BootcampCapacityDTO> resultMono = bootcampCapacityServicePort.listCapacitiesBootcamp(page,  size,  sortBy,  sortDir, messageId).map(bootcampCapacitieMapper::toBootcampCapacityDTO);
         return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(resultMono, PageResponse.class);
+    }
+
+    @Operation(parameters = {
+            @Parameter(name = "idBootcamp", in = ParameterIn.QUERY, example = "1", description = "id del bootcamp")
+    })
+    public Mono<ServerResponse> listCapacityByBootcamp(ServerRequest request) {
+        String messageId = getMessageId(request);
+        //Parametros
+        String idBootcampStr = request.queryParam("idBootcamp").orElse("0");
+        Long idBootcamp = Long.parseLong(idBootcampStr);
+        Flux<CapacityDTO> resultMono = bootcampCapacityServicePort.listCapacitiesByBootcamp(idBootcamp, messageId).map(capacityMapper::capacityToCapacityDTO);
+        return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(resultMono, CapacityDTO.class);
 
     }
 

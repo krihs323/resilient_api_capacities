@@ -48,7 +48,7 @@ public class UseCasesConfig {
 
         @Bean
         public BootcampCapacityPersistencePort bootcampCapacityPersistencePort() {
-            return new BootcampCapacityPersistenceAdapter(bootcampCapacityRepository, bootcampCapacityEntityMapper);
+            return new BootcampCapacityPersistenceAdapter(bootcampCapacityRepository, bootcampCapacityEntityMapper, databaseClient);
         }
 
         @Bean

@@ -6,7 +6,6 @@ import com.example.resilient_api.domain.model.*;
 import com.example.resilient_api.domain.spi.EmailValidatorGateway;
 import com.example.resilient_api.domain.spi.CapacityPersistencePort;
 import com.example.resilient_api.domain.api.CapacityServicePort;
-import com.example.resilient_api.infrastructure.entrypoints.dto.BootcampCapacityDTO;
 import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityTechnologyReportDto;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

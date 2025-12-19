@@ -17,4 +17,11 @@ public interface CapacityMapper {
     @Mapping(source = "capacityTechnologyList", target = "capacityTechnologyList")
     Capacity capacityDTOToCapacity(CapacityDTO capacityDTO);
 
+
+    @Mapping( source = "id", target = "id")
+    @Mapping(source = "name", target = "name")
+    @Mapping(source = "description", target = "description")
+    @Mapping(source = "capacityTechnologyList", target = "capacityTechnologyList")
+    CapacityDTO capacityToCapacityDTO(Capacity capacity);
+
 }

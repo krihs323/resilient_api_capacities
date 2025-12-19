@@ -2,12 +2,15 @@ package com.example.resilient_api.infrastructure.adapters.persistenceadapter;
 
 import com.example.resilient_api.domain.model.BootcampCapacities;
 import com.example.resilient_api.domain.model.BootcampCapacity;
+import com.example.resilient_api.domain.model.Capacity;
 import com.example.resilient_api.domain.spi.BootcampCapacityPersistencePort;
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.entity.BootcampCapacityEntity;
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.mapper.BootcampCapacityEntityMapper;
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.repository.BootcampCapacityRepository;
+import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityTechnologyReportDto;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.r2dbc.core.DatabaseClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -19,6 +22,8 @@ import java.util.List;
 public class BootcampCapacityPersistenceAdapter implements BootcampCapacityPersistencePort {
     private final BootcampCapacityRepository bootcampCapacityRepository;
     private final BootcampCapacityEntityMapper bootcampCapacityEntityMapper;
+
+    private final DatabaseClient databaseClient;
 
     @Override
     public Mono<BootcampCapacities> save(BootcampCapacities bootcampCapacity) {
@@ -48,6 +53,26 @@ public class BootcampCapacityPersistenceAdapter implements BootcampCapacityPersi
     @Override
     public Flux<BootcampCapacity> getAll(int page, int size, String sortBy, String sortDir, String messageId) {
         return bootcampCapacityRepository.findAll().map(bootcampCapacityEntityMapper::toModel);
+    }
+
+    @Override
+    public Flux<Capacity> getCapacitiesByBootcamp(Long idBootcamp, String messageId) {
+        String sql = """
+            select capacities.id as id_capacity, capacities.name as name, capacities.description as description from capacities_x_bootcamps inner join capacities on
+            capacities_x_bootcamps.id_capacity  = capacities.id
+            where capacities_x_bootcamps.id_bootcamp = %s
+            ORDER BY capacities_x_bootcamps.id_bootcamp, NAME ASC
+            """.formatted(idBootcamp);;
+        return databaseClient.sql(sql)
+                //.bind("limit", size )
+                //.bind("offset", page)
+                .map((row, meta) -> new Capacity(
+                        row.get("id_capacity", Long.class),
+                        row.get("name", String.class),
+                        row.get("description", String.class),
+                        new ArrayList<>()
+                ))
+                .all();
     }
 
 }

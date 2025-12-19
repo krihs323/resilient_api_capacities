@@ -10,4 +10,6 @@ public interface BootcampCapacityPersistencePort {
     Mono<BootcampCapacities> save(BootcampCapacities bootcampCapacities);
     Mono<Boolean> existByIdBootcamp(Long idBootcamp);
     Flux<BootcampCapacity> getAll(int page, int size, String sortBy, String sortDir, String messageId);
+
+    Flux<Capacity> getCapacitiesByBootcamp(Long idBootcamp, String messageId);
 }

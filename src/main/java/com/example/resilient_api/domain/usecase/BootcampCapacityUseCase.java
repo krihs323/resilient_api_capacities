@@ -5,6 +5,7 @@ import com.example.resilient_api.domain.enums.TechnicalMessage;
 import com.example.resilient_api.domain.exceptions.BusinessException;
 import com.example.resilient_api.domain.model.*;
 import com.example.resilient_api.domain.spi.BootcampCapacityPersistencePort;
+import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityDTO;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -34,6 +35,11 @@ public class BootcampCapacityUseCase implements BootcampCapacityServicePort {
         return bootcampCapacityPersistencePort.getAll(page, size, sortBy, sortDir, messageId);
     }
 
+    @Override
+    public Flux<Capacity> listCapacitiesByBootcamp(Long idBootcamp, String messageId) {
+        //TODO AGREGARLE LAS TECNOLOGIAS POR CADA CAPACIDAD ENCONTRADA EN LA CONSULTA
+        return bootcampCapacityPersistencePort.getCapacitiesByBootcamp(idBootcamp, messageId);
+    }
 
     private Mono<Boolean> validateDuplicate(List<BootcampCapacity> bootcampCapacityList) {
         Set<BootcampCapacity> uniqueCapacities = new HashSet<>(bootcampCapacityList);

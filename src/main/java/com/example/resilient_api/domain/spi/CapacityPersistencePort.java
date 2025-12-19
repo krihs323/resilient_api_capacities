@@ -1,10 +1,7 @@
 package com.example.resilient_api.domain.spi;
 
-import com.example.resilient_api.domain.model.BootcampCapacity;
 import com.example.resilient_api.domain.model.Capacity;
 import com.example.resilient_api.domain.model.CapacityList;
-import com.example.resilient_api.domain.model.PageResponse;
-import com.example.resilient_api.infrastructure.entrypoints.dto.BootcampCapacityDTO;
 import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityTechnologyReportDto;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
