@@ -5,20 +5,25 @@ import com.example.resilient_api.domain.enums.TechnicalMessage;
 import com.example.resilient_api.domain.exceptions.BusinessException;
 import com.example.resilient_api.domain.model.*;
 import com.example.resilient_api.domain.spi.BootcampCapacityPersistencePort;
-import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityDTO;
+import com.example.resilient_api.domain.spi.TechnologyGateway;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 public class BootcampCapacityUseCase implements BootcampCapacityServicePort {
 
     private final BootcampCapacityPersistencePort bootcampCapacityPersistencePort;
+    private final TechnologyGateway technologyGateway;
 
-    public BootcampCapacityUseCase(BootcampCapacityPersistencePort bootcampCapacityPersistencePort) {
+    public BootcampCapacityUseCase(BootcampCapacityPersistencePort bootcampCapacityPersistencePort, TechnologyGateway technologyGateway) {
         this.bootcampCapacityPersistencePort = bootcampCapacityPersistencePort;
+        this.technologyGateway = technologyGateway;
     }
 
     @Override
@@ -36,9 +41,20 @@ public class BootcampCapacityUseCase implements BootcampCapacityServicePort {
     }
 
     @Override
-    public Flux<Capacity> listCapacitiesByBootcamp(Long idBootcamp, String messageId) {
+    public Flux<CapacityTechnologies> listCapacitiesByBootcamp(Long idBootcamp, String messageId) {
         //TODO AGREGARLE LAS TECNOLOGIAS POR CADA CAPACIDAD ENCONTRADA EN LA CONSULTA
-        return bootcampCapacityPersistencePort.getCapacitiesByBootcamp(idBootcamp, messageId);
+
+        return bootcampCapacityPersistencePort.getCapacitiesByBootcamp(idBootcamp, messageId)
+                .flatMap(capacity ->
+                    technologyGateway.getTechnologiesByCapacity(String.valueOf(capacity.id()), messageId)
+                            .collectList()
+                            .map(technologies -> new CapacityTechnologies(
+                                    capacity.id(),
+                                    capacity.name(),
+                                    capacity.description(),
+                                    technologies
+                            )).doOnNext(x->log.info("tecnologias: "+x.capacityTechnologiesList().toString()))
+                    );
     }
 
     private Mono<Boolean> validateDuplicate(List<BootcampCapacity> bootcampCapacityList) {

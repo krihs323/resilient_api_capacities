@@ -1,4 +1,4 @@
-package com.example.resilient_api.infrastructure.adapters.emailvalidatoradapter.config;
+package com.example.resilient_api.infrastructure.adapters.technologyapiadapter.config;
 
 import io.github.resilience4j.bulkhead.Bulkhead;
 import io.github.resilience4j.bulkhead.BulkheadRegistry;
@@ -15,8 +15,8 @@ public class BulkheadConfiguration {
     }
 
     @Bean
-    public Bulkhead emailValidatorBulkhead() {
+    public Bulkhead technologyApiBulkhead() {
         // Usamos la configuración definida en application.yml
-        return bulkheadRegistry.bulkhead("emailValidatorBulkhead");
+        return bulkheadRegistry.bulkhead("technologyApiBulkhead");
     }
 }

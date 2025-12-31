@@ -6,16 +6,12 @@ import com.example.resilient_api.domain.enums.TechnicalMessage;
 import com.example.resilient_api.domain.exceptions.BusinessException;
 import com.example.resilient_api.domain.exceptions.CustomException;
 import com.example.resilient_api.domain.exceptions.TechnicalException;
-import com.example.resilient_api.domain.model.BootcampCapacity;
 import com.example.resilient_api.domain.model.PageResponse;
 import com.example.resilient_api.infrastructure.entrypoints.dto.BootcampCapacitiesDTO;
 import com.example.resilient_api.infrastructure.entrypoints.dto.BootcampCapacityDTO;
 import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityDTO;
 import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityTechnologyReportDto;
-import com.example.resilient_api.infrastructure.entrypoints.mapper.BootcampCapacitieMapper;
-import com.example.resilient_api.infrastructure.entrypoints.mapper.BootcampCapacitiesMapper;
-import com.example.resilient_api.infrastructure.entrypoints.mapper.CapacityListMapper;
-import com.example.resilient_api.infrastructure.entrypoints.mapper.CapacityMapper;
+import com.example.resilient_api.infrastructure.entrypoints.mapper.*;
 import com.example.resilient_api.infrastructure.entrypoints.util.APIResponse;
 import com.example.resilient_api.infrastructure.entrypoints.util.ErrorDTO;
 import com.example.resilient_api.infrastructure.validation.ObjectValidator;
@@ -54,6 +50,7 @@ public class CapacityHandlerImpl {
     private final BootcampCapacitiesMapper bootcampCapacitiesMapper;
     private final BootcampCapacityServicePort bootcampCapacityServicePort;
     private final BootcampCapacitieMapper bootcampCapacitieMapper;
+    private final CapacitiesMapper capacitiesMapper;
 
 
     @Operation(
@@ -231,7 +228,7 @@ public class CapacityHandlerImpl {
         //Parametros
         String idBootcampStr = request.queryParam("idBootcamp").orElse("0");
         Long idBootcamp = Long.parseLong(idBootcampStr);
-        Flux<CapacityDTO> resultMono = bootcampCapacityServicePort.listCapacitiesByBootcamp(idBootcamp, messageId).map(capacityMapper::capacityToCapacityDTO);
+        Flux<CapacityDTO> resultMono = bootcampCapacityServicePort.listCapacitiesByBootcamp(idBootcamp, messageId).map(capacitiesMapper::capacityTechnologiesToCapacityDTO);
         return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(resultMono, CapacityDTO.class);
 
     }

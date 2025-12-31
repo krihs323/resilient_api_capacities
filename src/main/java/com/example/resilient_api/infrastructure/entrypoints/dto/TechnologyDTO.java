@@ -17,4 +17,8 @@ public class TechnologyDTO {
     @PositiveOrZero
     private Long idTechnology;
 
+    private String name;
+
+    private String description;
+
 }

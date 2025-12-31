@@ -2,8 +2,8 @@ package com.example.resilient_api.application.config;
 
 import com.example.resilient_api.domain.api.BootcampCapacityServicePort;
 import com.example.resilient_api.domain.spi.BootcampCapacityPersistencePort;
-import com.example.resilient_api.domain.spi.EmailValidatorGateway;
 import com.example.resilient_api.domain.spi.CapacityPersistencePort;
+import com.example.resilient_api.domain.spi.TechnologyGateway;
 import com.example.resilient_api.domain.usecase.BootcampCapacityUseCase;
 import com.example.resilient_api.domain.usecase.CapacityUseCase;
 import com.example.resilient_api.domain.api.CapacityServicePort;
@@ -34,15 +34,18 @@ public class UseCasesConfig {
         private final BootcampCapacityRepository bootcampCapacityRepository;
         private final BootcampCapacityEntityMapper bootcampCapacityEntityMapper;
 
+        private final TechnologyGateway technologyGateway;
 
-        @Bean
+
+
+    @Bean
         public CapacityPersistencePort capacitiesPersistencePort() {
                 return new CapacityPersistenceAdapter(capacityRepository, capacityEntityMapper, capacityTechnologyRepository, capacityTechnologyEntityMapper, capacityListMapper, databaseClient);
         }
 
         @Bean
-        public CapacityServicePort capacitiesServicePort(CapacityPersistencePort capacitiesPersistencePort, EmailValidatorGateway emailValidatorGateway){
-                return new CapacityUseCase(capacitiesPersistencePort, emailValidatorGateway);
+        public CapacityServicePort capacitiesServicePort(CapacityPersistencePort capacitiesPersistencePort){
+                return new CapacityUseCase(capacitiesPersistencePort);
         }
 
 
@@ -53,6 +56,6 @@ public class UseCasesConfig {
 
         @Bean
         public BootcampCapacityServicePort bootcampCapacityServicePort(BootcampCapacityPersistencePort bootcampCapacityPersistencePort){
-            return new BootcampCapacityUseCase(bootcampCapacityPersistencePort);
+            return new BootcampCapacityUseCase(bootcampCapacityPersistencePort, technologyGateway);
         }
 }
