@@ -233,6 +233,18 @@ public class CapacityHandlerImpl {
 
     }
 
+    @Operation(parameters = {
+            @Parameter(name = "id", in = ParameterIn.QUERY, example = "1", description = "id del bootcamp de referencia a borrar")
+    })
+    public Mono<ServerResponse> deleteCapacityByBootcamp(ServerRequest request) {
+        String messageId = getMessageId(request);
+        int id = Integer.valueOf(request.pathVariable("id"));
+        Mono<Void> resultMono = capacityServicePort.deleteCapacityByBootcamp(id, messageId);
+        //        return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(productService.delete(id), Product.class);
+        return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(resultMono, CapacityDTO.class);
+
+    }
+
     private Mono<ServerResponse> buildErrorResponse(HttpStatus httpStatus, String identifier, TechnicalMessage error,
                                                     List<ErrorDTO> errors) {
         return Mono.defer(() -> {

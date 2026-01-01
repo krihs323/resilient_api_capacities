@@ -14,4 +14,5 @@ public interface CapacityServicePort {
 
     Flux<CapacityList> listCapacities(int page, int size, String sortBy, String sortDir, String messageId);
 
+    Mono<Void> deleteCapacityByBootcamp(int id, String messageId);
 }

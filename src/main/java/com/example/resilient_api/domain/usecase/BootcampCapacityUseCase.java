@@ -42,8 +42,6 @@ public class BootcampCapacityUseCase implements BootcampCapacityServicePort {
 
     @Override
     public Flux<CapacityTechnologies> listCapacitiesByBootcamp(Long idBootcamp, String messageId) {
-        //TODO AGREGARLE LAS TECNOLOGIAS POR CADA CAPACIDAD ENCONTRADA EN LA CONSULTA
-
         return bootcampCapacityPersistencePort.getCapacitiesByBootcamp(idBootcamp, messageId)
                 .flatMap(capacity ->
                     technologyGateway.getTechnologiesByCapacity(String.valueOf(capacity.id()), messageId)

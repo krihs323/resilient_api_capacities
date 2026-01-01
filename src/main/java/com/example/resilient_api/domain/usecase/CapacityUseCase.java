@@ -5,6 +5,7 @@ import com.example.resilient_api.domain.exceptions.BusinessException;
 import com.example.resilient_api.domain.model.*;
 import com.example.resilient_api.domain.spi.CapacityPersistencePort;
 import com.example.resilient_api.domain.api.CapacityServicePort;
+import com.example.resilient_api.domain.spi.TechnologyGateway;
 import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityTechnologyReportDto;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -16,9 +17,11 @@ import java.util.Set;
 public class CapacityUseCase implements CapacityServicePort {
 
     private final CapacityPersistencePort capacityPersistencePort;
+    private final TechnologyGateway technologyGateway;
 
-    public CapacityUseCase(CapacityPersistencePort capacityPersistencePort) {
+    public CapacityUseCase(CapacityPersistencePort capacityPersistencePort, TechnologyGateway technologyGateway) {
         this.capacityPersistencePort = capacityPersistencePort;
+        this.technologyGateway = technologyGateway;
     }
 
     @Override
@@ -51,7 +54,14 @@ public class CapacityUseCase implements CapacityServicePort {
         return capacityPersistencePort.findCapabilitiesOrderedByName(page, size, sortBy, sortDir, messageId);
     }
 
-
+    @Override
+    public Mono<Void> deleteCapacityByBootcamp(int id, String messageId) {
+        //llamar a borrar tecnologias
+        //si se borra entonces borrar capacidades
+        technologyGateway.deleteTechnologyByCapacity(id, messageId);
+        //si no se borra la capacidad por asociacion, generar error y no borrar
+        return null;
+    }
 
 
     private Mono<Boolean> validateDuplicate(List<CapacityTechnology> capacityTechnologies) {

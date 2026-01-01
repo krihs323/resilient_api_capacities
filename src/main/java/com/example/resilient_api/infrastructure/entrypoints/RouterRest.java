@@ -16,7 +16,6 @@ public class RouterRest {
                 .POST("/capacity",
                         capacityHandler::createCapacity,
                         ops -> ops.beanClass(CapacityHandlerImpl.class).beanMethod("createCapacity"))
-
                 .GET("/capacity",
                         capacityHandler::listCapacity,
                         ops -> ops.beanClass(CapacityHandlerImpl.class).beanMethod("listCapacity")
@@ -33,6 +32,9 @@ public class RouterRest {
                         capacityHandler::listCapacityByBootcamp,
                         ops -> ops.beanClass(CapacityHandlerImpl.class).beanMethod("listCapacityByBootcamp")
                 )
+                .DELETE("/capacity",
+                        capacityHandler::deleteCapacityByBootcamp,
+                        ops -> ops.beanClass(CapacityHandlerImpl.class).beanMethod("deleteCapacityByBootcamp"))
                 .build();
     }
 }

@@ -45,7 +45,7 @@ public class UseCasesConfig {
 
         @Bean
         public CapacityServicePort capacitiesServicePort(CapacityPersistencePort capacitiesPersistencePort){
-                return new CapacityUseCase(capacitiesPersistencePort);
+                return new CapacityUseCase(capacitiesPersistencePort, technologyGateway);
         }
 
 
