@@ -2,6 +2,7 @@ package com.example.resilient_api.infrastructure.entrypoints.handler;
 
 import com.example.resilient_api.domain.api.BootcampCapacityServicePort;
 import com.example.resilient_api.domain.api.CapacityServicePort;
+import com.example.resilient_api.domain.constants.Messages;
 import com.example.resilient_api.domain.enums.TechnicalMessage;
 import com.example.resilient_api.domain.exceptions.BusinessException;
 import com.example.resilient_api.domain.exceptions.CustomException;
@@ -106,7 +107,7 @@ public class CapacityHandlerImpl {
                                 .message(ex.getMessage())
                                 .build())))
                 .onErrorResume(ex -> {
-                    log.error("Unexpected error occurred for messageId: {}", messageId, ex);
+                    log.error(Messages.MSJ_SERVER_ERROR.getValue()+": {}", messageId, ex);
                     return buildErrorResponse(
                             HttpStatus.INTERNAL_SERVER_ERROR,
                             messageId,
@@ -171,7 +172,7 @@ public class CapacityHandlerImpl {
                                 .message(ex.getMessage())
                                 .build())))
                 .onErrorResume(ex -> {
-                    log.error("Unexpected error occurred for messageId: {}", messageId, ex);
+                    log.error(Messages.MSJ_SERVER_ERROR.getValue()+": {}", messageId, ex);
                     return buildErrorResponse(
                             HttpStatus.INTERNAL_SERVER_ERROR,
                             messageId,
@@ -234,14 +235,33 @@ public class CapacityHandlerImpl {
     }
 
     @Operation(parameters = {
-            @Parameter(name = "id", in = ParameterIn.QUERY, example = "1", description = "id del bootcamp de referencia a borrar")
+            @Parameter(name = "idBootcamp", in = ParameterIn.QUERY, example = "1", description = "id del bootcamp de referencia a borrar")
     })
     public Mono<ServerResponse> deleteCapacityByBootcamp(ServerRequest request) {
         String messageId = getMessageId(request);
-        int id = Integer.valueOf(request.pathVariable("id"));
-        Mono<Void> resultMono = capacityServicePort.deleteCapacityByBootcamp(id, messageId);
-        //        return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(productService.delete(id), Product.class);
-        return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(resultMono, CapacityDTO.class);
+        Long idBootcamp = Long.parseLong(request.pathVariable("idBootcamp"));
+
+        return capacityServicePort.deleteCapacityByBootcamp(idBootcamp, messageId).then(ServerResponse.noContent().build())
+                .onErrorResume(BusinessException.class, ex -> buildErrorResponse(
+                        HttpStatus.BAD_REQUEST,
+                        messageId,
+                        TechnicalMessage.TECHNOLOGY_WITH_OTHER_CAPACITIES,
+                        List.of(ErrorDTO.builder()
+                                .code(ex.getTechnicalMessage().getCode())
+                                .message(ex.getTechnicalMessage().getMessage())
+                                .param(ex.getTechnicalMessage().getParam())
+                                .build())))
+                .onErrorResume(ex -> {
+                    log.error("Unexpected error occurred for messageId: {}", messageId, ex);
+                    return buildErrorResponse(
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            messageId,
+                            TechnicalMessage.INTERNAL_ERROR,
+                            List.of(ErrorDTO.builder()
+                                    .code(TechnicalMessage.INTERNAL_ERROR.getCode())
+                                    .message(TechnicalMessage.INTERNAL_ERROR.getMessage())
+                                    .build()));
+                });
 
     }
 

@@ -1,8 +1,11 @@
 package com.example.resilient_api.infrastructure.adapters.technologyapiadapter;
 
+import com.example.resilient_api.domain.constants.Messages;
 import com.example.resilient_api.domain.enums.TechnicalMessage;
 import com.example.resilient_api.domain.exceptions.BusinessException;
 import com.example.resilient_api.domain.exceptions.TechnicalException;
+import com.example.resilient_api.domain.model.BootcampCapacity;
+import com.example.resilient_api.domain.model.CapacityTechnology;
 import com.example.resilient_api.domain.model.TechnologyApiResult;
 import com.example.resilient_api.domain.model.Technology;
 import com.example.resilient_api.domain.spi.TechnologyGateway;
@@ -10,12 +13,13 @@ import com.example.resilient_api.infrastructure.adapters.technologyapiadapter.dt
 import com.example.resilient_api.infrastructure.adapters.technologyapiadapter.util.Constants;
 import io.github.resilience4j.bulkhead.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.reactor.retry.RetryOperator;
 import io.github.resilience4j.retry.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -24,6 +28,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 @Component
@@ -67,37 +73,34 @@ public class TechnologyAdapter implements TechnologyGateway {
     }
 
     @Override
-    public Mono<Boolean> deleteTechnologyByCapacity(int id, String messageId) {
-        log.info("Starting deletion for: {} with messageId: {}", id, messageId);
+    public Mono<Boolean> deleteTechnologyByCapacity(Long idBootcamp, List<BootcampCapacity> capacityTechnologies, String messageId) {
+        log.info("Starting deletion for: {} with messageId: {}", idBootcamp, messageId);
 
-        return webClient.delete() // Usamos el verbo DELETE
+        return webClient.method(HttpMethod.DELETE)// Usamos el verbo DELETE
                 .uri(uriBuilder -> uriBuilder
-                        .path("capacity/{id}") // Asumiendo que el nombre va en el path o usa queryParam según tu API
+                        .path("technology/{id_bootcamp}") // Asumiendo que el nombre va en el path o usa queryParam según tu API
                         .queryParam("api_key", technologyApiProperties.getApiKey())
-                        .build(id))
+                        .build(idBootcamp))
+                .body(Mono.just(capacityTechnologies), new ParameterizedTypeReference<List<BootcampCapacity>>() {})
                 .header(HttpHeaders.CONTENT_TYPE, "application/json")
                 .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .header(Messages.MSJ_HEADER.getValue(), messageId)
                 .retrieve()
-                .onStatus(status -> status.value() == 400, response ->
-                        response.bodyToMono(String.class) // Leemos el cuerpo del error (puede ser JSON o texto)
-                                .flatMap(errorBody -> {
-                                    log.error("Error 400 - Bad Request for messageId {}: {}", messageId, errorBody);
-                                    // Lógica para propagar el error o lanzar una excepción personalizada
-                                    return Mono.error(new RuntimeException("API Error: " + errorBody));
-                                })
-                )
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
-                        buildErrorResponse(response, TechnicalMessage.INTERNAL_ERROR_IN_ADAPTERS))
-                .toEntity(Void.class)
-                .map(response -> response.getStatusCode().is2xxSuccessful())
-                // Si ocurre un error (incluido el 400), el operador onErrorResume lo captura
-                .onErrorResume(e -> {
-                    log.error("Final failure in delete for messageId {}: {}", messageId, e.getMessage());
-                    return Mono.just(false);
+                    buildErrorResponse(response, TechnicalMessage.INTERNAL_ERROR_IN_ADAPTERS))
+                .onStatus(status -> status.value() == 400, response ->
+                        response.bodyToMono(String.class)
+                                .flatMap(error -> Mono.error(new BusinessException(TechnicalMessage.TECHNOLOGY_WITH_OTHER_CAPACITIES)))
+                )
+                .toBodilessEntity()
+                .map(response -> {
+                    // Esto devolverá true si el status es 200, 201, 204, etc.
+                    boolean isSuccess = response.getStatusCode().is2xxSuccessful();
+                    log.info("API DELETE response for messageId {}: Status {}", messageId, response.getStatusCode());
+                    return isSuccess;
                 })
-                .transformDeferred(RetryOperator.of(retry))
-                .transformDeferred(mono -> Mono.defer(() -> bulkhead.executeSupplier(() -> mono)));
+                .timeout(Duration.ofSeconds(15)) // Aumentamos el tiempo de espera a 15 segundos
+                .doOnError(e -> log.error("Timeout real detectado: {}", e.getMessage()));
     }
 
     public Mono<TechnologyApiResult> fallback(Throwable t) {

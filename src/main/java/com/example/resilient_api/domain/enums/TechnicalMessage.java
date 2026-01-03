@@ -19,7 +19,10 @@ public enum TechnicalMessage {
     CAPACITY_ALREADY_EXISTS("400","La tecnologia ya está registrado." ,"" ),
     CAPACITY_NAME_EMPTY("400","El nombre no debe ser vacio" ,"name" ),
     TECHNOLOGY_DUPLICATE_IN_LIST("400","Tecnologias repetidas en la capacidad que intenta crear" ,"" ),
-    CAPACITY_DUPLICATE_IN_LIST("400","Capacidades repetidas en el bootcamp que intenta crear" ,"" );
+    CAPACITY_DUPLICATE_IN_LIST("400","Capacidades repetidas en el bootcamp que intenta crear" ,"" ),
+    TECHNOLOGY_WITH_OTHER_CAPACITIES("400", "No se pueden borrar las tecnologias porque estan asociados a otras capacidades", ""),
+    CAPACITY_WITH_OTHER_BOOTCAMPS("400", "No se pueden borrar las capacidades porque estan asociados a otros bootcamps", ""),
+    ;
 
     private final String code;
     private final String message;

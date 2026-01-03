@@ -7,6 +7,8 @@ import com.example.resilient_api.domain.spi.CapacityPersistencePort;
 import com.example.resilient_api.domain.api.CapacityServicePort;
 import com.example.resilient_api.domain.spi.TechnologyGateway;
 import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityTechnologyReportDto;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -14,6 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 public class CapacityUseCase implements CapacityServicePort {
 
     private final CapacityPersistencePort capacityPersistencePort;
@@ -55,12 +58,34 @@ public class CapacityUseCase implements CapacityServicePort {
     }
 
     @Override
-    public Mono<Void> deleteCapacityByBootcamp(int id, String messageId) {
-        //llamar a borrar tecnologias
-        //si se borra entonces borrar capacidades
-        technologyGateway.deleteTechnologyByCapacity(id, messageId);
-        //si no se borra la capacidad por asociacion, generar error y no borrar
-        return null;
+    //@Transactional
+    public Mono<Void> deleteCapacityByBootcamp(Long idBootcamp, String messageId) {
+        //Buscar capacidades en otros bootcamps
+        return capacityPersistencePort.getCapacitiesInOtherBootcamps(idBootcamp, messageId)
+                // si existe, retorna un error
+                .flatMap(existe -> {
+                    if (Boolean.TRUE.equals(existe)) {
+                        return Mono.error(new BusinessException(TechnicalMessage.CAPACITY_WITH_OTHER_BOOTCAMPS));
+                    }
+                    //no existe, entonces llame al borrado de tecnologias
+                    //busque la lista de capacidades a borrar
+                    return capacityPersistencePort.getCapacitiesByBootcamp(idBootcamp, messageId)
+                            .collectList()
+                            .flatMap(capacities -> {
+                                if(capacities.isEmpty()){
+                                    log.warn("No se encontraron capacidades para el bootcamp: {}", idBootcamp);
+                                    return Mono.empty();
+                                }
+                                //llama al metodo de borrado y le pasa la lista de capacidades a borrar en las tecnologias
+                                return technologyGateway.deleteTechnologyByCapacity(idBootcamp, capacities, messageId)
+                                        .flatMap(isDeleted -> {
+                                            //si retorna 204 es porque borro
+                                            //llame a mi metodo de borrar
+                                                return capacityPersistencePort.deleteCapacitiesByBootcamp(idBootcamp, messageId)
+                                                        .then(capacityPersistencePort.deleteAllCapacitiesyBootcamp(idBootcamp, messageId));
+                                        });
+                            });
+                });
     }
 
 

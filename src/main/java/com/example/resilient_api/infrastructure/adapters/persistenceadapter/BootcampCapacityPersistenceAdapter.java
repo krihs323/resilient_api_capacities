@@ -7,7 +7,6 @@ import com.example.resilient_api.domain.spi.BootcampCapacityPersistencePort;
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.entity.BootcampCapacityEntity;
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.mapper.BootcampCapacityEntityMapper;
 import com.example.resilient_api.infrastructure.adapters.persistenceadapter.repository.BootcampCapacityRepository;
-import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityTechnologyReportDto;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -62,7 +61,7 @@ public class BootcampCapacityPersistenceAdapter implements BootcampCapacityPersi
             capacities_x_bootcamps.id_capacity  = capacities.id
             where capacities_x_bootcamps.id_bootcamp = %s
             ORDER BY capacities_x_bootcamps.id_bootcamp, NAME ASC
-            """.formatted(idBootcamp);;
+            """.formatted(idBootcamp);
         return databaseClient.sql(sql)
                 //.bind("limit", size )
                 //.bind("offset", page)

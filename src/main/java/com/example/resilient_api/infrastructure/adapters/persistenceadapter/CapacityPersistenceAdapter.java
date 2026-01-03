@@ -18,6 +18,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Slf4j
@@ -71,7 +72,7 @@ public class CapacityPersistenceAdapter implements CapacityPersistencePort {
                             GROUP by capacities.id
                             ORDER BY %s %s
             LIMIT :limit OFFSET :offset
-            """.formatted(sortBy, sortDir);;
+            """.formatted(sortBy, sortDir);
         return databaseClient.sql(sql)
                 .bind("limit", size )
                 .bind("offset", page)
@@ -109,4 +110,62 @@ public class CapacityPersistenceAdapter implements CapacityPersistencePort {
                 .all();
     }
 
+    @Override
+    public Mono<Boolean> getCapacitiesInOtherBootcamps(Long idBootcamp, String messageId) {
+        String sql = """
+                select id from tecnologias.capacities_x_bootcamps where id_bootcamp <> %s
+                    and id_capacity in (select id_capacity  from tecnologias.capacities_x_bootcamps where id_bootcamp = %s) limit 1
+            """.formatted(idBootcamp, idBootcamp);
+        return databaseClient.sql(sql)
+                .map((row, meta) -> true)
+                .first()
+                .defaultIfEmpty(false);
+    }
+
+    @Override
+    public Flux<BootcampCapacity> getCapacitiesByBootcamp(Long idBootcamp, String messageId) {
+        String sql = """
+            select id, id_bootcamp, id_capacity from tecnologias.capacities_x_bootcamps where id_bootcamp = %s
+            """.formatted(idBootcamp);
+        return databaseClient.sql(sql)
+                .map((row, meta) -> new BootcampCapacity(
+                        row.get("id", Long.class),
+                        row.get("id_capacity", Long.class),
+                        row.get("id_bootcamp", Long.class)
+                ))
+                .all();
+    }
+
+    @Override
+    public Mono<Void> deleteCapacitiesByBootcamp(Long idBootcamp, String messageId) {
+        // Preparar el SQL
+        String sql = """
+                DELETE FROM tecnologias.capacities WHERE id in (
+                    select id_capacity from tecnologias.capacities_x_bootcamps where id_bootcamp = %s group by id_capacity)
+                """
+                .formatted(idBootcamp);
+        log.info("Executing delete for capacity idBootcamp: {} for messageId: {}", idBootcamp, messageId);
+        // Ejecutar y retornar Mono<Void>
+        return databaseClient.sql(sql)
+                .fetch()
+                .rowsUpdated() // Retorna la cantidad de filas afectadas (Mono<Long>)
+                .doOnNext(rows -> log.info("Successfully deleted {} rows for messageId: {}", rows, messageId))
+                .then(); // Transformamos el Mono<Long> en Mono<Void>
+    }
+
+    @Override
+    public Mono<Void> deleteAllCapacitiesyBootcamp(Long idBootcamp, String messageId) {
+        // Preparar el SQL
+        String sql = """
+                DELETE FROM tecnologias.capacities_x_bootcamps WHERE id_bootcamp = %s
+                """
+                .formatted(idBootcamp);
+        log.info("Executing delete for capacities_x_bootcamps idBootcamp: {} for messageId: {}", idBootcamp, messageId);
+        // Ejecutar y retornar Mono<Void>
+        return databaseClient.sql(sql)
+                .fetch()
+                .rowsUpdated() // Retorna la cantidad de filas afectadas (Mono<Long>)
+                .doOnNext(rows -> log.info("Successfully deleted {} rows for messageId: {}", rows, messageId))
+                .then(); // Transformamos el Mono<Long> en Mono<Void>
+    }
 }
