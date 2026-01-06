@@ -6,15 +6,13 @@ import com.example.resilient_api.domain.model.*;
 import com.example.resilient_api.domain.spi.CapacityPersistencePort;
 import com.example.resilient_api.domain.api.CapacityServicePort;
 import com.example.resilient_api.domain.spi.TechnologyGateway;
+import com.example.resilient_api.infrastructure.adapters.persistenceadapter.entity.CapacityTechnologyEntity;
 import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityTechnologyReportDto;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.transaction.annotation.Transactional;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class CapacityUseCase implements CapacityServicePort {
@@ -33,28 +31,76 @@ public class CapacityUseCase implements CapacityServicePort {
                 .filter(exists -> !exists)
                 .switchIfEmpty(Mono.error(new BusinessException(TechnicalMessage.CAPACITY_ALREADY_EXISTS)))
                 .flatMap(exists -> validateDuplicate(capacity.capacityTechnologyList()))
-                .flatMap(x-> capacityPersistencePort.save(capacity));
+                .flatMap(x-> capacityPersistencePort.save(capacity))
+                .flatMap(savedCapacityEntity -> {
+                    List<CapacityTechnologyEntity> details = new ArrayList<>();
+                    for (CapacityTechnology req : capacity.capacityTechnologyList()) {
+                        CapacityTechnologyEntity detail = new CapacityTechnologyEntity();
+                        detail.setId_capacity(savedCapacityEntity.id());
+                        detail.setId_tecnology(req.id_tecnology());
+                        details.add(detail);
+                    }
+                    return technologyGateway
+                            .saveAll(details, messageId)
+                            .then(Mono.just(savedCapacityEntity));
+                });
     }
-
-
 
     @Override
     public Mono<PageResponse<CapacityTechnologyReportDto>> listCapacitiesPage(int page, int size, String sortBy, String sortDir, String messageId) {
-        var data = capacityPersistencePort.listCapacitiesPage(page, size, sortBy, sortDir, messageId).collectList();
-        var total = capacityPersistencePort.countGroupedCapacities();
+        Mono<Long> total = capacityPersistencePort.countCapacities();
 
-        return Mono.zip(data, total)
-                .map(tuple -> new PageResponse<>(
-                        tuple.getT1(),
-                        tuple.getT2(),
-                        page,
-                        size
-                ));
-    }
+        Mono<List<Capacity>> data = capacityPersistencePort.listCapacitiesPage(page, size, sortBy, sortDir, messageId)
+                .collectList()
+                .doOnNext(list -> {
+                    log.info("DEBUG - Lista de capacidades recuperadas:");
+                    list.forEach(capacity -> log.info(" > " + capacity));
+                    log.info("Total elementos en página: " + list.size());
+                });
 
-    @Override
-    public Flux<CapacityList> listCapacities(int page, int size, String sortBy, String sortDir, String messageId) {
-        return capacityPersistencePort.findCapabilitiesOrderedByName(page, size, sortBy, sortDir, messageId);
+        //Obtenemos todas las capacidades y las agrupamos por idCapacity en un Map
+        // Esto optimiza la búsqueda: K = idCapacity, V = cantidad de ocurrencias
+        Mono<Map<Long, Long>> technologiesCountMapMono = technologyGateway.getAllTecnologies(messageId)
+                .filter(cap -> cap.id_capacity() != null)
+                .collect(Collectors.groupingBy(
+                        CapacityTechnology::id_capacity,
+                        Collectors.counting()
+                )).doOnNext(list -> {
+                    log.info("DEBUG - Lista de tecnologias recuperada:");
+                    log.info(" > " + list);
+                    log.info("Total elementos en página: " + list.size());
+                });
+
+        //Combinamos ambos Monos y transformamos
+        return Mono.zip(data, technologiesCountMapMono, total)
+                .map(tuple -> {
+                    List<Capacity> capacities = tuple.getT1();
+                    Map<Long, Long> countsMap = tuple.getT2();
+                    Long totalCapacities = tuple.getT3();
+
+                    // Transformamos la lista de Capacities a CapacityTechnologyReportDto
+                    List<CapacityTechnologyReportDto> content = capacities.stream()
+                            .map(b -> new CapacityTechnologyReportDto(
+                                    b.name(),
+                                    countsMap.getOrDefault(b.id(), 0L)
+                            ))
+                            .sorted((o1, o2) -> {
+                                // Comparador dinámico
+                                if ("DESC".equalsIgnoreCase(sortBy)) {
+                                    return Long.compare(o2.getCantTechnologies(), o1.getCantTechnologies()); // Mayor a menor
+                                } else {
+                                    return Long.compare(o1.getCantTechnologies(), o2.getCantTechnologies()); // Menor a mayor
+                                }
+                            })
+                            .toList();
+                    // Retornamos el objeto de paginación
+                    return new PageResponse<>(
+                            content,
+                            totalCapacities,
+                            page,
+                            size
+                    );
+                });
     }
 
     @Override

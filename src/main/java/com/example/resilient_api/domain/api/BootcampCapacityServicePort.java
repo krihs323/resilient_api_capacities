@@ -1,7 +1,6 @@
 package com.example.resilient_api.domain.api;
 
 import com.example.resilient_api.domain.model.*;
-import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityDTO;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

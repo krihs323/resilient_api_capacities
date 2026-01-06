@@ -9,8 +9,10 @@ import com.example.resilient_api.domain.model.CapacityTechnology;
 import com.example.resilient_api.domain.model.TechnologyApiResult;
 import com.example.resilient_api.domain.model.Technology;
 import com.example.resilient_api.domain.spi.TechnologyGateway;
+import com.example.resilient_api.infrastructure.adapters.persistenceadapter.entity.CapacityTechnologyEntity;
 import com.example.resilient_api.infrastructure.adapters.technologyapiadapter.dto.TechnologyApiProperties;
 import com.example.resilient_api.infrastructure.adapters.technologyapiadapter.util.Constants;
+import com.example.resilient_api.infrastructure.entrypoints.dto.CapacityDTO;
 import io.github.resilience4j.bulkhead.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.Retry;
@@ -78,7 +80,7 @@ public class TechnologyAdapter implements TechnologyGateway {
 
         return webClient.method(HttpMethod.DELETE)// Usamos el verbo DELETE
                 .uri(uriBuilder -> uriBuilder
-                        .path("technology/{id_bootcamp}") // Asumiendo que el nombre va en el path o usa queryParam según tu API
+                        .path("technology/{id_bootcamp}")
                         .queryParam("api_key", technologyApiProperties.getApiKey())
                         .build(idBootcamp))
                 .body(Mono.just(capacityTechnologies), new ParameterizedTypeReference<List<BootcampCapacity>>() {})
@@ -101,6 +103,45 @@ public class TechnologyAdapter implements TechnologyGateway {
                 })
                 .timeout(Duration.ofSeconds(15)) // Aumentamos el tiempo de espera a 15 segundos
                 .doOnError(e -> log.error("Timeout real detectado: {}", e.getMessage()));
+    }
+
+    @Override
+    public Mono<Void> saveAll(List<CapacityTechnologyEntity> details, String messageId) {
+        log.info("Starting save tecnologies for capacity: [{}] with messageId: {}", details, messageId);
+        return webClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("technology/savecapacities")
+                        .build())
+                // Definir el tipo de contenido (JSON)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+                .header(Messages.MSJ_HEADER.getValue(), messageId)
+                .bodyValue(details)
+                .retrieve()
+                .toBodilessEntity()
+                .then();
+    }
+
+    @Override
+    public Flux<CapacityTechnology> getAllTecnologies(String messageId) {
+        log.info("Starting get all bootcamp x capacities");
+        return webClient.get()
+                .uri(technologyPath + "technology/capacity")
+                // Definir el tipo de contenido (JSON)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+                .header(Messages.MSJ_HEADER.getValue(), messageId)
+                .retrieve()
+                // Manejo de errores basado en códigos de estado HTTP
+                .onStatus(HttpStatusCode::is5xxServerError, response ->
+                        buildErrorResponse(response, TechnicalMessage.INTERNAL_ERROR_IN_ADAPTERS))
+                .onStatus(HttpStatusCode::is5xxServerError, response ->
+                        Mono.error(new RuntimeException(Messages.MSJ_SERVER_ERROR.getValue())))
+                // Mapear el cuerpo de la respuesta a un objeto
+                .bodyToFlux(CapacityTechnology.class)
+                .doOnNext(response -> log.info("Received save API response for messageId {}: {}", messageId, response))
+                .doOnTerminate(() -> log.info("Completed bootcamps x capacities get process for messageId: {}", messageId))
+                .doOnError(e -> log.error("Error gettin all capacities for messageId: {}", messageId, e));
     }
 
     public Mono<TechnologyApiResult> fallback(Throwable t) {

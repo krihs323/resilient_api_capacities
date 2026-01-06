@@ -63,8 +63,6 @@ public class BootcampCapacityPersistenceAdapter implements BootcampCapacityPersi
             ORDER BY capacities_x_bootcamps.id_bootcamp, NAME ASC
             """.formatted(idBootcamp);
         return databaseClient.sql(sql)
-                //.bind("limit", size )
-                //.bind("offset", page)
                 .map((row, meta) -> new Capacity(
                         row.get("id_capacity", Long.class),
                         row.get("name", String.class),

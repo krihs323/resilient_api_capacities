@@ -31,7 +31,7 @@ public class RouterRest {
                 .GET("/capacity/capacities-by-Bootcamps/",
                         capacityHandler::listCapacityByBootcamp,
                         ops -> ops.beanClass(CapacityHandlerImpl.class).beanMethod("listCapacityByBootcamp")
-                )
+                 )
                 .DELETE("/capacity/{idBootcamp}",
                         capacityHandler::deleteCapacityByBootcamp,
                         ops -> ops.beanClass(CapacityHandlerImpl.class).beanMethod("deleteCapacityByBootcamp"))
