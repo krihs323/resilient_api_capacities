@@ -86,7 +86,7 @@ public class CapacityUseCase implements CapacityServicePort {
                             ))
                             .sorted((o1, o2) -> {
                                 // Comparador dinámico
-                                if ("DESC".equalsIgnoreCase(sortBy)) {
+                                if ("DESC".equalsIgnoreCase(sortDir)) {
                                     return Long.compare(o2.getCantTechnologies(), o1.getCantTechnologies()); // Mayor a menor
                                 } else {
                                     return Long.compare(o1.getCantTechnologies(), o2.getCantTechnologies()); // Menor a mayor

@@ -45,14 +45,14 @@ class ResilientApiApplicationTests {
     private CapacityHandlerImpl capacityHandler;
 
     private CapacityDTO capacityDTO;
-    private final String MESSAGE_ID = "test-uuid";
+    private final String messageId = "test-uuid";
 
     @BeforeEach
     void setUp() {
         List<TechnologyDTO> technologies = List.of(
-                new TechnologyDTO(1L),
-                new TechnologyDTO(2L),
-                new TechnologyDTO(3L)
+                new TechnologyDTO(1L, "java", "descripcion"),
+                new TechnologyDTO(1L, "java", "descripcion"),
+                new TechnologyDTO(1L, "java", "descripcion")
         );
         capacityDTO = new CapacityDTO();
         capacityDTO.setName("Backend Java");
@@ -66,7 +66,7 @@ class ResilientApiApplicationTests {
     void createCapacitySuccess() {
         // GIVEN
         MockServerRequest request = MockServerRequest.builder()
-                .header(X_MESSAGE_ID, MESSAGE_ID)
+                .header(X_MESSAGE_ID, messageId)
                 .body(Mono.just(capacityDTO));
 
         List<CapacityTechnology> capacityTechnologies = List.of(
@@ -75,7 +75,6 @@ class ResilientApiApplicationTests {
                 new CapacityTechnology(3L, 1L, 102L)
         );
 
-        //doNothing().when(objectValidator).validate(any());
         when(capacityMapper.capacityDTOToCapacity(any())).thenReturn(new Capacity(1L, "java", "description", capacityTechnologies));
         when(capacityServicePort.registerCapacity(any(), anyString()))
                 .thenReturn(Mono.just(new Capacity(1L, "java", "description", capacityTechnologies)));
@@ -95,7 +94,7 @@ class ResilientApiApplicationTests {
     void listCapacitySuccess() {
         // GIVEN
         MockServerRequest request = MockServerRequest.builder()
-                .header(X_MESSAGE_ID, MESSAGE_ID)
+                .header(X_MESSAGE_ID, messageId)
                 .queryParam("page", "0")
                 .queryParam("size", "10")
                 .build();
