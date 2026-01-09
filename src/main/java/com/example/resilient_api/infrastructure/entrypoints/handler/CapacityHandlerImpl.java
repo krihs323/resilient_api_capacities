@@ -71,7 +71,7 @@ public class CapacityHandlerImpl {
             })
     public Mono<ServerResponse> createCapacity(ServerRequest request) {
         String messageId = getMessageId(request);
-        return request.bodyToMono(CapacityDTO.class).doOnNext(objectValidator::validate)
+        return request.bodyToMono(CapacityDTO.class).flatMap(objectValidator::validate)
                 .flatMap(capacity -> capacityServicePort.registerCapacity(capacityMapper.capacityDTOToCapacity(capacity), messageId)
                         .doOnSuccess(savedCapacity -> log.info("Capacity created successfully with messageId: {}", messageId))
                 )
@@ -136,7 +136,7 @@ public class CapacityHandlerImpl {
             })
     public Mono<ServerResponse> createCapacityBootcamp(ServerRequest request) {
         String messageId = getMessageId(request);
-        return request.bodyToMono(BootcampCapacitiesDTO.class).doOnNext(objectValidator::validate)
+        return request.bodyToMono(BootcampCapacitiesDTO.class).flatMap(objectValidator::validate)
                 .flatMap(capacity -> bootcampCapacityServicePort.registerBootcampCapacity(bootcampCapacitiesMapper.bootcampCapacitiesDTOToBootcampCapacities(capacity), messageId)
                         .doOnSuccess(savedCapacity -> log.info("Capacity created successfully with messageId: {}", messageId))
                 )
